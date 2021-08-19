@@ -21,7 +21,10 @@ import androidx.navigation.compose.rememberNavController
 import com.machina.compose_notes.nav.MainRoutes
 import com.machina.compose_notes.view.add_note.AddNoteScreen
 import com.machina.compose_notes.view.home.HomeScreen
+import dagger.hilt.EntryPoint
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @ExperimentalAnimationApi

@@ -15,26 +15,28 @@ abstract class ComposeNoteDatabase: RoomDatabase() {
 
     abstract fun noteDao(): NoteDatabaseDao
 
-    companion object {
-        private var INSTANCE: ComposeNoteDatabase? = null
 
-        @InternalCoroutinesApi
-        fun getInstance(context: Context): ComposeNoteDatabase {
-            synchronized(this) {
-                var instance = INSTANCE
-                if (instance == null) {
-                    instance = Room.databaseBuilder(
-                        context.applicationContext,
-                        ComposeNoteDatabase::class.java,
-                        "compose_note_database"
-                    ).fallbackToDestructiveMigration()
-                     .build()
-                    INSTANCE = instance
-                }
-
-                return instance
-            }
-        }
-    }
+//    Manual context injection of getting DB Instance
+//    companion object {
+//        private var INSTANCE: ComposeNoteDatabase? = null
+//
+//        @InternalCoroutinesApi
+//        fun getInstance(context: Context): ComposeNoteDatabase {
+//            synchronized(this) {
+//                var instance = INSTANCE
+//                if (instance == null) {
+//                    instance = Room.databaseBuilder(
+//                        context.applicationContext,
+//                        ComposeNoteDatabase::class.java,
+//                        "compose_note_database"
+//                    ).fallbackToDestructiveMigration()
+//                     .build()
+//                    INSTANCE = instance
+//                }
+//
+//                return instance
+//            }
+//        }
+//    }
 
 }
