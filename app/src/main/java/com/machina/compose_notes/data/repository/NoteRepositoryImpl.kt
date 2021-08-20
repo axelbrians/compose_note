@@ -2,8 +2,7 @@ package com.machina.compose_notes.data.repository
 
 import com.machina.compose_notes.data.local.NoteDatabaseDao
 import com.machina.compose_notes.data.model.Note
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 class NoteRepositoryImpl @Inject constructor(
@@ -11,7 +10,7 @@ class NoteRepositoryImpl @Inject constructor(
 ) {
 
     fun getAllNotes(): Flow<List<Note>> {
-        return noteDatabaseDao.getAllNotes().distinctUntilChanged()
+        return noteDatabaseDao.getAllNotes()
     }
 
    suspend fun addNewNote(note: Note) {
@@ -29,7 +28,7 @@ class NoteRepositoryImpl @Inject constructor(
             return false
         }
 
-        first.forEachIndexed { index, value -> if (second[index] != value) { return false} }
+        first.forEachIndexed { index, value -> if (second[index] != value) { return false } }
         return true
     }
 }

@@ -4,16 +4,21 @@ import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.TweenSpec
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.machina.compose_notes.data.model.Note
@@ -28,6 +33,7 @@ import timber.log.Timber
 @ExperimentalAnimationApi
 @Composable
 fun HomeScreen(
+    bottomSheetState: ModalBottomSheetState,
     navController: NavController,
     viewModel: HomeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
@@ -50,7 +56,7 @@ fun HomeScreen(
                 onActionClick = { isDialogVisible = !isDialogVisible }
             )
         },
-        bottomBar = { MainBottomBar() },
+        bottomBar = { MainBottomBar(bottomSheetState = bottomSheetState, coroutineScope = coroutineScope) },
         floatingActionButton = { MainFab(navController = navController) },
         isFloatingActionButtonDocked = true,
         floatingActionButtonPosition = FabPosition.Center,
@@ -137,7 +143,7 @@ fun HomeScreen(
                                         with(notes[index]) {
                                             if (id >= 0) {
                                                 viewModel.undoDeleteNote(this)
-                                                delay(150)
+//                                                delay(150)
                                             }
                                         }
                                     }
@@ -162,45 +168,12 @@ fun MainTopAppBar(
     title: String,
     onActionClick: () -> Unit
 ) {
-
     TopAppBar(
         title = { Text(text = title) },
         actions = {
             IconButton(onClick = onActionClick) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete")
             }
-
-//            IconButton(onClick = {
-//                    ioCoroutine.launch {
-//                        Timber.d("add dummy note")
-//                        viewModel.addNewNote(
-//                            Note(
-//                                "Empty title",
-//                                "lorem ipsum dolor sit amet",
-//                                "",
-//                                true
-//                            )
-//                        )
-//                    }
-//                }
-//            ) {
-//                Icon(Icons.Default.Add, contentDescription = "Add")
-//            }
         }
-    )
-}
-
-@Composable
-fun MainBottomBar() {
-    BottomAppBar(
-        cutoutShape = MaterialTheme.shapes.small.copy(CornerSize(percent = 50)),
-    ) { }
-}
-
-@Composable
-fun MainFab(navController: NavController) {
-    FloatingActionButton(
-        onClick = { navController.navigate(MainRoutes.ADD_NOTE_SCREEN) },
-        content = { Icon(Icons.Default.Add, contentDescription = "Add New Note") }
     )
 }
