@@ -1,4 +1,4 @@
-package com.machina.compose_notes.view.home
+package com.machina.compose_notes.ui.view.home
 
 import android.util.Log
 import androidx.compose.animation.*
@@ -8,36 +8,40 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.machina.compose_notes.data.model.Note
-import com.machina.compose_notes.data.source.LocalSource
 import com.machina.compose_notes.nav.MainRoutes
-import com.machina.compose_notes.view.composable.ItemNote
+import com.machina.compose_notes.ui.view.composable.ItemNote
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @ExperimentalMaterialApi
 @ExperimentalAnimationApi
 @Composable
 fun HomeScreen(
     navController: NavController,
+    viewModel: HomeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
-    var notes by remember { mutableStateOf(LocalSource.getDummyNotes()) }
+    val notes by remember(viewModel) {
+        viewModel.allNotes
+    }.collectAsState(listOf())
+
     var isDialogVisible by remember { mutableStateOf(false) }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val listState = rememberLazyListState()
+    val snackHostState = remember { SnackbarHostState() }
+    val lazyListState = rememberLazyListState()
 
     val coroutineScope = rememberCoroutineScope()
+
 
     Scaffold(
         topBar = {
@@ -50,10 +54,11 @@ fun HomeScreen(
         floatingActionButton = { MainFab(navController = navController) },
         isFloatingActionButtonDocked = true,
         floatingActionButtonPosition = FabPosition.Center,
-        scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+        scaffoldState = rememberScaffoldState(snackbarHostState = snackHostState),
         backgroundColor = MaterialTheme.colors.background
     ) {
-        LazyColumn(state = listState) {
+
+        LazyColumn(state = lazyListState) {
             items(
                 items = notes,
                 key = { item: Note -> item.id }
@@ -68,10 +73,10 @@ fun HomeScreen(
                     )
                 ) {
                     ItemNote(item) {
-                        notes = changeNoteVisibility(notes, it)
+                        viewModel.deleteNote(it)
                         coroutineScope.launch {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            val result = snackbarHostState.showSnackbar(
+                            snackHostState.currentSnackbarData?.dismiss()
+                            val result = snackHostState.showSnackbar(
                                 message = "Note ${item.title} deleted",
                                 actionLabel = "Undo"
                             )
@@ -79,7 +84,7 @@ fun HomeScreen(
                             when (result) {
                                 SnackbarResult.Dismissed -> {  }
                                 SnackbarResult.ActionPerformed -> {
-                                    notes = changeNoteVisibility(notes, it)
+                                    viewModel.undoDeleteNote(it)
                                 }
                             }
                         }
@@ -96,32 +101,31 @@ fun HomeScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         coroutineScope.launch {
-                            val iterate = notes
-                            val firstKey = listState.layoutInfo.visibleItemsInfo.first().key
-                            val lastKey = listState.layoutInfo.visibleItemsInfo.last().key
-                            Log.d("Home", "key $lastKey")
+                            val firstKey = lazyListState.layoutInfo.visibleItemsInfo.first().key
+                            val lastKey = lazyListState.layoutInfo.visibleItemsInfo.last().key
+                            Timber.d("key $lastKey")
                             if (lastKey is Int && firstKey is Int) {
-                                for (index in (lastKey + 1) until iterate.size) {
-                                    notes = changeNoteVisibility(notes, iterate[index])
+                                for (index in (lastKey + 1) until notes.size) {
+                                    viewModel.deleteNote(notes[index])
                                 }
 
                                 for (index in 0 until firstKey - 1) {
-                                    notes = changeNoteVisibility(notes, iterate[index])
+                                    viewModel.deleteNote(notes[index])
                                 }
 
-                                for (index in (firstKey - 1)..lastKey) {
-                                    notes = changeNoteVisibility(notes, iterate[index])
+                                for (index in (firstKey - 1) until lastKey) {
+                                    viewModel.deleteNote(notes[index])
                                     delay(150)
                                 }
                             } else {
-                                for (index in (iterate.size - 1) downTo 0) {
-                                    val note = iterate[index]
+                                for (index in (notes.size - 1) downTo 0) {
+                                    val note = notes[index]
                                     if (note.id < 0) continue
-                                    notes = changeNoteVisibility(notes, iterate[index])
+                                    viewModel.deleteNote(note)
                                 }
                             }
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            val result = snackbarHostState.showSnackbar(
+                            snackHostState.currentSnackbarData?.dismiss()
+                            val result = snackHostState.showSnackbar(
                                 message = "All note deleted",
                                 actionLabel = "Undo"
                             )
@@ -129,11 +133,13 @@ fun HomeScreen(
                             when (result) {
                                 SnackbarResult.Dismissed -> {  }
                                 SnackbarResult.ActionPerformed -> {
-                                    for (index in (iterate.size - 1) downTo 0) {
-//                                        Log.d("Home", "index $index")
-                                        if (iterate[index].id < 0) continue
-                                        notes = changeNoteVisibility(notes, iterate[index])
-//                                        delay(150)
+                                    for (index in (notes.size - 1) downTo 0) {
+                                        with(notes[index]) {
+                                            if (id >= 0) {
+                                                viewModel.undoDeleteNote(this)
+                                                delay(150)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -151,28 +157,35 @@ fun HomeScreen(
     }
 }
 
-fun changeNoteVisibility(notes: List<Note>, removedNote: Note): List<Note> {
-    return notes.map { currentNote ->
-        if (currentNote.id == removedNote.id) {
-            val visibility = currentNote.isVisible
-            currentNote.copy(isVisible = !visibility)
-        } else {
-            currentNote
-        }
-    }
-}
-
 @Composable
 fun MainTopAppBar(
     title: String,
     onActionClick: () -> Unit
 ) {
+
     TopAppBar(
         title = { Text(text = title) },
         actions = {
             IconButton(onClick = onActionClick) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete")
             }
+
+//            IconButton(onClick = {
+//                    ioCoroutine.launch {
+//                        Timber.d("add dummy note")
+//                        viewModel.addNewNote(
+//                            Note(
+//                                "Empty title",
+//                                "lorem ipsum dolor sit amet",
+//                                "",
+//                                true
+//                            )
+//                        )
+//                    }
+//                }
+//            ) {
+//                Icon(Icons.Default.Add, contentDescription = "Add")
+//            }
         }
     )
 }

@@ -1,6 +1,5 @@
-package com.machina.compose_notes.view.composable
+package com.machina.compose_notes.ui.view.composable
 
-import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.TweenSpec

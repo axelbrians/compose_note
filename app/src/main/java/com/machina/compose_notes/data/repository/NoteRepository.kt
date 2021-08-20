@@ -1,12 +1,12 @@
 package com.machina.compose_notes.data.repository
 
 import com.machina.compose_notes.data.local.NoteDatabaseDao
+import com.machina.compose_notes.data.model.Note
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class NoteRepository@Inject constructor(
-    private val noteDatabaseDao: NoteDatabaseDao
-) {
-
+interface NoteRepository {
+    suspend fun getAllNotes(): Flow<List<Note>>
 
 
 }

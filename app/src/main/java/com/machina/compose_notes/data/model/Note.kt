@@ -6,9 +6,6 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "notes_list")
 data class Note(
-    @PrimaryKey(autoGenerate = true)
-    var id: Int,
-
     @ColumnInfo(name = "note_title")
     var title: String = "",
 
@@ -19,5 +16,9 @@ data class Note(
     var updatedAt: String = "",
 
     @ColumnInfo(name = "note_isvisible")
-    var isVisible: Boolean = true
+    var isVisible: Boolean = true,
+
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "note_id")
+    var id: Int = 0,
 )

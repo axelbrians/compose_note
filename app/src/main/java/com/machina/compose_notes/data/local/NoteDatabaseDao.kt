@@ -1,17 +1,19 @@
 package com.machina.compose_notes.data.local
 
-import androidx.room.Dao
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import com.machina.compose_notes.data.model.Note
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Dao
 interface NoteDatabaseDao {
 
     @Query("SELECT * from notes_list")
-    suspend fun getAllNotes(): Flow<List<Note>>
+    fun getAllNotes(): Flow<List<Note>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun addNewNote(note: Note)
 
     @Update
-    suspend fun changeNoteVisibility(note: Note, isVisible: Boolean)
+    suspend fun changeNoteVisibility(note: Note)
 }
